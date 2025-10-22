@@ -1,13 +1,17 @@
-from __future__ import annotations
-from typing import Callable, Dict, Any, Awaitable
+from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject
 from ..context import AppContext
 
 class ContextInjector(BaseMiddleware):
     def __init__(self, ctx: AppContext):
-        super().__init__()
         self._ctx = ctx
 
-    async def __call__(self, handler: Callable[[Any, Dict[str, Any]], Awaitable[Any]], event: Any, data: Dict[str, Any]) -> Any:
-        data["ctx"] = self._ctx
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
+    ) -> Any:
+        data.setdefault("ctx", self._ctx)  # не трогаем, если кто-то уже положил
         return await handler(event, data)
