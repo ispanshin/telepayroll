@@ -9,6 +9,7 @@ def connect(db_path: str):
     try:
         cn.execute("PRAGMA journal_mode=WAL;")
         cn.execute("PRAGMA synchronous=NORMAL;")
+        cn.execute("PRAGMA foreign_keys=ON;")
         yield cn
         cn.commit()
     finally:
@@ -20,18 +21,19 @@ CREATE TABLE IF NOT EXISTS polls (
   message_id INTEGER NOT NULL,
   chat_id INTEGER NOT NULL,
   question TEXT NOT NULL,
-  options_json TEXT NOT NULL,
+  options_json TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS votes (
   poll_id TEXT NOT NULL,
   user_id INTEGER NOT NULL,
-  option_ids_json TEXT NOT NULL,
+  option_ids_json TEXT NOT NULL DEFAULT '[]',
   username TEXT,
   first_name TEXT,
   last_name TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (poll_id, user_id)
+  PRIMARY KEY (poll_id, user_id),
+  FOREIGN KEY (poll_id) REFERENCES polls(poll_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS teachers (
   id INTEGER PRIMARY KEY,
@@ -42,6 +44,9 @@ CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_polls_created_at ON polls(created_at);
+CREATE INDEX IF NOT EXISTS idx_votes_poll      ON votes(poll_id);
 """
 
 def ensure_schema(db_path: str, connect_fn=connect) -> None:
