@@ -36,7 +36,7 @@ def build_payroll_context(*, poll_id: str, roster: Iterable[Tuple[int, str, floa
     outsiders_ids = [uid for uid in answers.keys() if uid not in roster_map]
     outsiders = [(uid, voters_names.get(uid, str(uid))) for uid in outsiders_ids]
     total_amount = sum(r.amount for r in per_teacher)
-    per_teacher.sort(key=lambda r: (r.teacher_name.lower(), r.teacher_id))
+    per_teacher.sort(key=lambda r: (r.teacher_name.casefold(), r.teacher_id))
     return PayrollContext(
         poll_id=poll_id,
         per_teacher=per_teacher,
