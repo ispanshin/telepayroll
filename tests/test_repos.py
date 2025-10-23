@@ -18,7 +18,7 @@ def test_votes_save_and_read(repos):
     assert names[100] in {"@u", "Ivan Petrov"}
 
 def test_teachers_upsert_list_get(repos):
-    from mybot.infra.repos.teachers import Teacher
+    from app.infra.repos.teachers import Teacher
     repos.teachers.upsert(Teacher(id=1, name="Alice", default_rate=1))
     repos.teachers.upsert(Teacher(id=2, name="Bob", default_rate=2))
     all_ = repos.teachers.list_all()
