@@ -18,6 +18,11 @@ class VotesRepo:
         last_name: str | None,
     ) -> None:
         with self._connect(self._db_path) as cn:
+            if not option_ids:
+                # если все варианты сняли — считаем, что голоса нет
+                cn.execute("DELETE FROM votes WHERE poll_id=? AND user_id=?", (poll_id, user_id))
+                return
+
             cn.execute(
                 """
                 INSERT OR REPLACE INTO votes(poll_id, user_id, option_ids_json, username, first_name, last_name, created_at)

@@ -55,7 +55,6 @@ async def cb_add_teacher(
     await cb.message.answer(
         "Введи Имя Фамилию для преподавателя.\n"
         f"Подсказка из ТГ: <code>{suggested}</code>\n"
-        "Если хочешь оставить подсказку как есть — пришли «-»."
     )
 
 

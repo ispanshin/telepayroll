@@ -4,6 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from ..domain.payroll import PayrollContext
 from ..utils.callback_data import PayrollAdd
 
+MAX_MISSING_SHOW = 20  # сколько имен показывать максимум в списке
 
 def _short(s: str, n: int) -> str:
     s = s.strip()
@@ -35,12 +36,25 @@ def payroll_screen_text_and_kb(ctx: PayrollContext, *, include_missing_zero: boo
     lines.append("")
     lines.append(f"Итого: <b>{ctx.total_amount:g}</b>")
 
+    usernames = getattr(ctx, "usernames", {}) or {}
+
+    # 👉 БЛОК: Преподаватели, которые не голосовали
+    missing_rows = [r for r in ctx.per_teacher if r.classes == 0]
+    if missing_rows:
+        lines.append("")
+        lines.append(f"<b>Не голосовали ({len(missing_rows)}):</b>")
+        for r in missing_rows[:MAX_MISSING_SHOW]:
+            uname = usernames.get(r.teacher_id)  # может быть None — тогда уйдём по tg://id
+            link = _profile_link_html(r.teacher_id, uname, str(r.teacher_name))
+            lines.append(f" • {link}")
+        if len(missing_rows) > MAX_MISSING_SHOW:
+            lines.append(f"… и ещё {len(missing_rows) - MAX_MISSING_SHOW}")
+
     # Список аутсайдеров (голосовали, но не в ростере)
     if ctx.outsiders:
         lines.append("")
         lines.append("<b>Новые голосовавшие (не в ростере):</b>")
         # если в контексте есть usernames — используем, иначе None
-        usernames = getattr(ctx, "usernames", {}) or {}
         for uid, name in ctx.outsiders[:10]:
             link = _profile_link_html(uid, usernames.get(uid))
             lines.append(f" • {escape(str(name))} — {link}")
