@@ -9,6 +9,7 @@ from ..utils.auth import ensure_admin_message, ensure_admin_callback
 
 router = Router()
 
+
 @router.message(Command("payroll"))
 async def open_latest_payroll(msg: Message, ctx: AppContext):
     if not await ensure_admin_message(msg, ctx.settings.admin_ids):

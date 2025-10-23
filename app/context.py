@@ -10,6 +10,7 @@ from .infra.repos.settings import SettingsRepo
 from .services.payroll import PayrollService
 from .services.polls import PollsService
 
+
 @dataclass
 class AppContext:
     bot: Bot
@@ -30,5 +31,13 @@ class AppContext:
         conf = SettingsRepo(str(settings.database_file), connect)
         payroll = PayrollService(teachers=teachers, votes=votes)
         polls_service = PollsService(bot=bot, polls=polls, conf=conf)
-        return cls(bot=bot, settings=settings, polls=polls, votes=votes, teachers=teachers, conf=conf,
-                   payroll_service=payroll, polls_service=polls_service)
+        return cls(
+            bot=bot,
+            settings=settings,
+            polls=polls,
+            votes=votes,
+            teachers=teachers,
+            conf=conf,
+            payroll_service=payroll,
+            polls_service=polls_service,
+        )

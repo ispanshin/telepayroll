@@ -3,6 +3,7 @@ from typing import Any, Awaitable, Callable, Dict, Iterable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
+
 class AdminOnlyMiddleware(BaseMiddleware):
     def __init__(self, admin_ids: Iterable[int]):
         # нормализуем в множество для O(1)

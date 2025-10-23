@@ -10,18 +10,24 @@ from ..utils.auth import ensure_admin_message
 
 router = Router()
 
+
 class NewPollSG(StatesGroup):
     waiting_question = State()
     waiting_options = State()
 
+
 @router.message(Command("start"))
 async def cmd_start(msg: Message):
-    await msg.answer("Привет! Я помогу с опросами и подсчётом выплат. Команды: /newpoll, /bind_here (в чате), /payroll")
+    await msg.answer(
+        "Привет! Я помогу с опросами и подсчётом выплат. Команды: /newpoll, /bind_here (в чате), /payroll"
+    )
+
 
 @router.message(Command("cancel"))
 async def cancel(msg: Message, state: FSMContext):
     await state.clear()
     await msg.answer("Окей, отменил.")
+
 
 @router.message(Command("newpoll"))
 async def newpoll_start(msg: Message, state: FSMContext, ctx: AppContext):
@@ -29,6 +35,7 @@ async def newpoll_start(msg: Message, state: FSMContext, ctx: AppContext):
         return
     await state.set_state(NewPollSG.waiting_question)
     await msg.answer("Введите текст вопроса для опроса:")
+
 
 @router.message(NewPollSG.waiting_question, F.text)
 async def newpoll_question(msg: Message, state: FSMContext):
@@ -39,6 +46,7 @@ async def newpoll_question(msg: Message, state: FSMContext):
     await state.update_data(question=question)
     await state.set_state(NewPollSG.waiting_options)
     await msg.answer("Введите варианты (через запятую или с новой строки):")
+
 
 @router.message(NewPollSG.waiting_options, F.text)
 async def newpoll_options(msg: Message, state: FSMContext, ctx: AppContext):
@@ -64,9 +72,11 @@ async def newpoll_options(msg: Message, state: FSMContext, ctx: AppContext):
     await state.clear()  # чистим при успехе
     await msg.answer(f"Опрос отправлен. poll_id=<code>{poll_id}</code>")
 
+
 @router.message(NewPollSG.waiting_question)
 async def not_text_question(msg: Message):
     await msg.answer("Нужен текст вопроса. Пришли текст сообщением.")
+
 
 @router.message(NewPollSG.waiting_options)
 async def not_text_options(msg: Message):

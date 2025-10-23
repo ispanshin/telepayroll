@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Iterable, Tuple
 
+
 @dataclass
 class PayrollRow:
     teacher_id: int
@@ -9,6 +10,7 @@ class PayrollRow:
     classes: int
     rate: float
     amount: float
+
 
 @dataclass
 class PayrollContext:
@@ -18,8 +20,14 @@ class PayrollContext:
     outsiders: List[Tuple[int, str]]
     total_amount: float
 
-def build_payroll_context(*, poll_id: str, roster: Iterable[Tuple[int, str, float]],
-                          answers: Dict[int, List[int]], voters_names: Dict[int, str]) -> PayrollContext:
+
+def build_payroll_context(
+    *,
+    poll_id: str,
+    roster: Iterable[Tuple[int, str, float]],
+    answers: Dict[int, List[int]],
+    voters_names: Dict[int, str],
+) -> PayrollContext:
     # roster: (id, name, rate)
     roster_map = {int(tid): (name, float(rate)) for tid, name, rate in roster}
     per_teacher: List[PayrollRow] = []
@@ -30,7 +38,11 @@ def build_payroll_context(*, poll_id: str, roster: Iterable[Tuple[int, str, floa
         classes = len(answers.get(tid, []))
         if classes == 0:
             missing_ids.append(tid)
-        per_teacher.append(PayrollRow(teacher_id=tid, teacher_name=name, classes=classes, rate=rate, amount=classes*rate))
+        per_teacher.append(
+            PayrollRow(
+                teacher_id=tid, teacher_name=name, classes=classes, rate=rate, amount=classes * rate
+            )
+        )
 
     # outsiders: answered but not in roster
     outsiders_ids = [uid for uid in answers.keys() if uid not in roster_map]

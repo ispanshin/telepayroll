@@ -2,6 +2,7 @@ from __future__ import annotations
 import sqlite3
 from contextlib import contextmanager
 
+
 @contextmanager
 def connect(db_path: str):
     cn = sqlite3.connect(db_path)
@@ -14,6 +15,7 @@ def connect(db_path: str):
         cn.commit()
     finally:
         cn.close()
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS polls (
@@ -48,6 +50,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE INDEX IF NOT EXISTS idx_polls_created_at ON polls(created_at);
 CREATE INDEX IF NOT EXISTS idx_votes_poll      ON votes(poll_id);
 """
+
 
 def ensure_schema(db_path: str, connect_fn=connect) -> None:
     with connect_fn(db_path) as cn:

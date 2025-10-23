@@ -10,8 +10,9 @@ from app.infra.repos.votes import VotesRepo
 from app.infra.repos.teachers import TeachersRepo
 from app.infra.repos.settings import SettingsRepo
 
+
 @contextmanager
-def test_connect(db_path: str):
+def connect_for_tests(db_path: str):
     cn = sqlite3.connect(db_path)
     cn.row_factory = sqlite3.Row
     cn.execute("PRAGMA foreign_keys=ON;")
@@ -23,17 +24,19 @@ def test_connect(db_path: str):
     finally:
         cn.close()
 
+
 @pytest.fixture()
 def db_path(tmp_path):
     p = tmp_path / "test.sqlite3"
-    ensure_schema(str(p), connect_fn=test_connect)
+    ensure_schema(str(p), connect_fn=connect_for_tests)
     return str(p)
+
 
 @pytest.fixture()
 def repos(db_path):
     return types.SimpleNamespace(
-        polls=PollsRepo(db_path, test_connect),
-        votes=VotesRepo(db_path, test_connect),
-        teachers=TeachersRepo(db_path, test_connect),
-        conf=SettingsRepo(db_path, test_connect),
+        polls=PollsRepo(db_path, connect_for_tests),
+        votes=VotesRepo(db_path, connect_for_tests),
+        teachers=TeachersRepo(db_path, connect_for_tests),
+        conf=SettingsRepo(db_path, connect_for_tests),
     )

@@ -7,6 +7,7 @@ from aiogram.exceptions import TelegramBadRequest
 from ..infra.repos.polls import PollsRepo, Poll
 from ..infra.repos.settings import SettingsRepo
 
+
 class PollsService:
     def __init__(self, bot: Bot, polls: PollsRepo, conf: SettingsRepo):
         self._bot = bot
@@ -34,6 +35,13 @@ class PollsService:
             else:
                 raise RuntimeError("Не удалось получить poll_id от Telegram")
 
-        self._polls.upsert(Poll(poll_id=poll_id, message_id=msg.message_id, chat_id=chat_id,
-                                question=question, options=options))
+        self._polls.upsert(
+            Poll(
+                poll_id=poll_id,
+                message_id=msg.message_id,
+                chat_id=chat_id,
+                question=question,
+                options=options,
+            )
+        )
         return poll_id

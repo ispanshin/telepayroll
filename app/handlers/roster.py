@@ -24,7 +24,9 @@ class AddTeacherSG(StatesGroup):
 
 
 @router.callback_query(PayrollAdd.filter())
-async def cb_add_teacher(cb: CallbackQuery, callback_data: PayrollAdd, ctx: AppContext, state: FSMContext):
+async def cb_add_teacher(
+    cb: CallbackQuery, callback_data: PayrollAdd, ctx: AppContext, state: FSMContext
+):
     """
     Шаг 1: по нажатию «Добавить …» просим ввести Имя Фамилию,
     подсказываем вариант из ТГ (username/ФИО), но сохраняем ТОЛЬКО своё.
@@ -136,4 +138,6 @@ async def show_roster(msg: Message, ctx: AppContext):
 
 @router.message(AddTeacherSG.waiting_name)
 async def add_teacher_name_not_text(msg: Message):
-    await msg.answer("Нужен текст. Пришли Имя Фамилию сообщением или «-», чтобы оставить подсказку.")
+    await msg.answer(
+        "Нужен текст. Пришли Имя Фамилию сообщением или «-», чтобы оставить подсказку."
+    )

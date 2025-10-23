@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 class SettingsRepo:
     def __init__(self, db_path: str, connect):
         self._db_path = db_path

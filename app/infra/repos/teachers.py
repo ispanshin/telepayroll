@@ -2,11 +2,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
 
+
 @dataclass
 class Teacher:
     id: int
     name: str
     default_rate: float
+
 
 class TeachersRepo:
     def __init__(self, db_path: str, connect):
@@ -26,16 +28,22 @@ class TeachersRepo:
 
     def get(self, teacher_id: int) -> Optional[Teacher]:
         with self._connect(self._db_path) as cn:
-            row = cn.execute("SELECT id, name, default_rate FROM teachers WHERE id=?", (teacher_id,)).fetchone()
+            row = cn.execute(
+                "SELECT id, name, default_rate FROM teachers WHERE id=?", (teacher_id,)
+            ).fetchone()
             if not row:
                 return None
-            return Teacher(id=int(row["id"]), name=row["name"], default_rate=float(row["default_rate"]))
+            return Teacher(
+                id=int(row["id"]), name=row["name"], default_rate=float(row["default_rate"])
+            )
 
     def list_all(self) -> List[Teacher]:
         with self._connect(self._db_path) as cn:
             return [
                 Teacher(id=int(r["id"]), name=r["name"], default_rate=float(r["default_rate"]))
-                for r in cn.execute("SELECT id, name, default_rate FROM teachers ORDER BY name").fetchall()
+                for r in cn.execute(
+                    "SELECT id, name, default_rate FROM teachers ORDER BY name"
+                ).fetchall()
             ]
 
     def list_by_ids(self, ids: Iterable[int]) -> List[Teacher]:
@@ -44,5 +52,11 @@ class TeachersRepo:
             return []
         placeholders = ",".join(["?"] * len(ids))
         with self._connect(self._db_path) as cn:
-            rows = cn.execute(f"SELECT id, name, default_rate FROM teachers WHERE id IN ({placeholders})", tuple(ids)).fetchall()
-            return [Teacher(id=int(r["id"]), name=r["name"], default_rate=float(r["default_rate"])) for r in rows]
+            rows = cn.execute(
+                f"SELECT id, name, default_rate FROM teachers WHERE id IN ({placeholders})",
+                tuple(ids),
+            ).fetchall()
+            return [
+                Teacher(id=int(r["id"]), name=r["name"], default_rate=float(r["default_rate"]))
+                for r in rows
+            ]

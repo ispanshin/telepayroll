@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 from typing import List
 
+
 class Settings(BaseSettings):
     bot_token: str
     admin_ids: List[int] = []
@@ -11,7 +12,9 @@ class Settings(BaseSettings):
     db_path: Path | None = None
     informatics_chat_id: int | None = None  # чат, куда отправляем опросы
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", env_nested_delimiter=",")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_nested_delimiter=","
+    )
 
     @property
     def database_file(self) -> Path:

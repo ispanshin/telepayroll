@@ -3,6 +3,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 from ..context import AppContext
 
+
 class ContextInjector(BaseMiddleware):
     def __init__(self, ctx: AppContext):
         self._ctx = ctx

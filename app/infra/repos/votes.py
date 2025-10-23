@@ -2,13 +2,21 @@ from __future__ import annotations
 from typing import Dict, List
 import json
 
+
 class VotesRepo:
     def __init__(self, db_path: str, connect):
         self._db_path = db_path
         self._connect = connect
 
-    def save_answer(self, poll_id: str, user_id: int, option_ids: List[int],
-                    username: str|None, first_name: str|None, last_name: str|None) -> None:
+    def save_answer(
+        self,
+        poll_id: str,
+        user_id: int,
+        option_ids: List[int],
+        username: str | None,
+        first_name: str | None,
+        last_name: str | None,
+    ) -> None:
         with self._connect(self._db_path) as cn:
             cn.execute(
                 """
@@ -20,13 +28,16 @@ class VotesRepo:
 
     def answers_by_poll(self, poll_id: str) -> Dict[int, List[int]]:
         with self._connect(self._db_path) as cn:
-            rows = cn.execute("SELECT user_id, option_ids_json FROM votes WHERE poll_id=?", (poll_id,)).fetchall()
+            rows = cn.execute(
+                "SELECT user_id, option_ids_json FROM votes WHERE poll_id=?", (poll_id,)
+            ).fetchall()
             return {int(r["user_id"]): (json.loads(r["option_ids_json"]) or []) for r in rows}
 
     def voter_display_names(self, poll_id: str) -> Dict[int, str]:
         with self._connect(self._db_path) as cn:
             rows = cn.execute(
-                "SELECT user_id, username, first_name, last_name FROM votes WHERE poll_id=?", (poll_id,)
+                "SELECT user_id, username, first_name, last_name FROM votes WHERE poll_id=?",
+                (poll_id,),
             ).fetchall()
             res: Dict[int, str] = {}
             for r in rows:

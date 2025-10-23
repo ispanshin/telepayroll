@@ -16,6 +16,7 @@ async def bind_here(msg: Message, ctx: AppContext):
     ctx.conf.set("informatics_chat_id", str(chat_id))
     await msg.answer(f"Привязал этот чат для опросов. chat_id={chat_id}")
 
+
 @router.poll_answer()
 async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
     try:

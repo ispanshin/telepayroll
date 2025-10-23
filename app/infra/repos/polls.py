@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 import json
 
+
 @dataclass
 class Poll:
     poll_id: str
@@ -10,6 +11,7 @@ class Poll:
     chat_id: int
     question: str
     options: list[str]
+
 
 class PollsRepo:
     def __init__(self, db_path: str, connect):
@@ -23,7 +25,13 @@ class PollsRepo:
                 INSERT OR REPLACE INTO polls(poll_id, message_id, chat_id, question, options_json, created_at)
                 VALUES (?,?,?,?,?,datetime('now'))
                 """,
-                (p.poll_id, p.message_id, p.chat_id, p.question, json.dumps(p.options, ensure_ascii=False)),
+                (
+                    p.poll_id,
+                    p.message_id,
+                    p.chat_id,
+                    p.question,
+                    json.dumps(p.options, ensure_ascii=False),
+                ),
             )
 
     def get(self, poll_id: str) -> Optional[Poll]:
