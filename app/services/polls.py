@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import asyncio
 from typing import List
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
@@ -26,7 +28,12 @@ class PollsService:
         poll_id = msg.poll.id if msg.poll else ""
         if not poll_id:
             # fallback: Telegram may not return poll immediately (rare)
-            raise TelegramBadRequest("Не удалось получить poll_id от Telegram")
+            await asyncio.sleep(0.2)
+            if msg.poll and msg.poll.id:
+                poll_id = msg.poll.id
+            else:
+                raise RuntimeError("Не удалось получить poll_id от Telegram")
+
         self._polls.upsert(Poll(poll_id=poll_id, message_id=msg.message_id, chat_id=chat_id,
                                 question=question, options=options))
         return poll_id
