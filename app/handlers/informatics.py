@@ -21,7 +21,8 @@ async def bind_here(msg: Message, ctx: AppContext):
 async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
     try:
         # сохраняем только если опрос известен нам
-        if ctx.polls.get(ans.poll_id) is None:
+        poll = ctx.polls.get(ans.poll_id)
+        if poll is None:
             return
 
         uid = int(ans.user.id)
@@ -29,6 +30,8 @@ async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
         first_name = ans.user.first_name
         last_name = ans.user.last_name
         option_ids = sorted(set(int(x) for x in (ans.option_ids or [])))
+        if option_ids and option_ids[-1] == len(poll.options) - 1:
+            option_ids.pop() # последний вариант всегда тык, его не считаем
 
         ctx.votes.save_answer(
             poll_id=ans.poll_id,

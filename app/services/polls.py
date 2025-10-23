@@ -6,14 +6,37 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from ..infra.repos.polls import PollsRepo, Poll
 from ..infra.repos.settings import SettingsRepo
+from typing import List, Iterable
 
 
-def _ensure_tyk(options: List[str]) -> List[str]:
-    # добавим "Тык" (без учёта регистра/пробелов), если его ещё нет
-    norm = [(o or "").strip() for o in options]
-    has_tyk = any(o.lower() == "тык" for o in norm)
-    return options if has_tyk else [*options, "Тык"]
+def _ensure_tyk(options: Iterable[str],
+                tyk_text: str = 'Тык',
+                enforce_limit: bool = True) -> List[str]:
+    """
+    Возвращает список опций, где ровно один 'Тык' стоит последним.
+    Удаляем все варианты 'Тык' (без учёта регистра/пробелов),
+    чистим пустые строки.
+    """
+    MAX_POLL_OPTIONS = 10
+    norm_tyk = tyk_text.strip().casefold()
 
+    cleaned: List[str] = []
+    for o in options:
+        s = (o or "").strip()
+        if not s:
+            continue
+        if s.casefold() == norm_tyk:
+            continue  # выбрасываем все встретившиеся 'Тык'
+        cleaned.append(s)
+
+    # добавляем единственный 'Тык' в конец
+    cleaned.append(tyk_text.strip())
+
+    if enforce_limit and len(cleaned) > MAX_POLL_OPTIONS:
+        # оставляем первые n-1 обычных + 'Тык'
+        cleaned = cleaned[:MAX_POLL_OPTIONS - 1] + [tyk_text.strip()]
+
+    return cleaned
 
 class PollsService:
     def __init__(self, bot: Bot, polls: PollsRepo, conf: SettingsRepo):
