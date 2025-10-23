@@ -61,21 +61,58 @@ async def cb_add_teacher(
 
 @router.message(AddTeacherSG.waiting_name, F.text)
 async def add_teacher_name(msg: Message, state: FSMContext, ctx: AppContext):
-    """
-    Шаг 2: принимаем ввод, сохраняем в teachers и обновляем экран payroll.
-    """
+    """Шаг 1: принимаем имя, просим ставку."""
     data = await state.get_data()
     raw = (msg.text or "").strip()
     uid = int(data["teacher_id"])
-    poll_id = data["poll_id"]
     suggested = (data.get("suggested_name") or "").strip() or str(uid)
 
-    # Если админ прислал "-" или пусто — берём подсказку как есть
     name = suggested if raw in {"", "-"} else raw
-    name = name[:128]  # небольшая санитария по длине
+    name = name[:128]
+    if not name:
+        await msg.answer("Имя не может быть пустым. Пришли Имя Фамилию или «-».")
+        return
 
-    # Сохраняем «официальное» имя только у себя
-    ctx.teachers.upsert(Teacher(id=uid, name=name, default_rate=1.0))
+    await state.update_data(final_name=name)
+    await state.set_state(AddTeacherSG.waiting_rate)
+
+    await msg.answer(
+        f"Ок, имя: <b>{escape(name)}</b>.\n"
+        "Теперь введи <b>ставку</b> (например: 1, 1.5 или 1,5). "
+        "Если оставить по умолчанию — пришли «-».",
+    )
+
+
+def _parse_rate(text: str) -> float | None:
+    t = (text or "").strip()
+    if t in {"", "-"}:
+        return 1.0
+    t = t.replace(",", ".")
+    try:
+        rate = float(t)
+    except ValueError:
+        return None
+    # можно добавить свои ограничения:
+    if rate <= 0 or rate > 1000:
+        return None
+    return rate
+
+
+@router.message(AddTeacherSG.waiting_rate, F.text)
+async def add_teacher_rate(msg: Message, state: FSMContext, ctx: AppContext):
+    """Шаг 2: принимаем ставку, сохраняем teacher, обновляем экран."""
+    data = await state.get_data()
+    uid = int(data["teacher_id"])
+    poll_id = data["poll_id"]
+    name = data.get("final_name") or (data.get("suggested_name") or str(uid))
+
+    rate = _parse_rate(msg.text or "")
+    if rate is None:
+        await msg.answer("Не понял ставку. Пришли число (например 1, 1.5 или 1,5), либо «-» для 1.")
+        return
+
+    # Сохраняем в ростер
+    ctx.teachers.upsert(Teacher(id=uid, name=name, default_rate=rate))
 
     # Обновляем экран payroll (если знаем, какое сообщение править)
     chat_id = data.get("screen_chat_id")
@@ -91,11 +128,10 @@ async def add_teacher_name(msg: Message, state: FSMContext, ctx: AppContext):
                 reply_markup=kb,
             )
         except TelegramBadRequest as e:
-            # Игнор, если контент не поменялся
             if "message is not modified" not in str(e):
                 raise
 
-    await msg.answer(f"Добавил в ростер: {name}")
+    await msg.answer(f"Добавил: <b>{escape(name)}</b> со ставкой <b>{rate:g}</b>.")
     await state.clear()
 
 
