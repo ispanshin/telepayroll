@@ -1,27 +1,66 @@
 from __future__ import annotations
+from html import escape
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from ..domain.payroll import PayrollContext
-from ..utils.callback_data import PayrollOpen, PayrollAdd
+from ..utils.callback_data import PayrollAdd
+
+
+def _short(s: str, n: int) -> str:
+    s = s.strip()
+    return s if len(s) <= n else s[: max(0, n - 1)] + "…"
+
+
+def _profile_url(uid: int, username: str | None) -> str:
+    # если знаем username — ведём на https://t.me/username, иначе — tg://user?id=...
+    return f"https://t.me/{username}" if username else f"tg://user?id={uid}"
+
+
+def _profile_link_html(uid: int, username: str | None, label: str | None = None) -> str:
+    url = _profile_url(uid, username)
+    text = label if label else (f"@{username}" if username else str(uid))
+    return f'<a href="{escape(url)}">{escape(text)}</a>'
+
 
 def payroll_screen_text_and_kb(ctx: PayrollContext, *, include_missing_zero: bool = False):
     lines = ["<b>Итоги (payroll)</b>", ""]
+
+    # Табличка по преподам
     for row in ctx.per_teacher:
         if not include_missing_zero and row.classes == 0:
             continue
         mark = "✅" if row.classes > 0 else "—"
-        lines.append(f"{mark} {row.teacher_name}: {row.classes} × {row.rate:g} = <b>{row.amount:g}</b>")
+        teacher = escape(str(row.teacher_name))
+        lines.append(f"{mark} {teacher}: {row.classes} × {row.rate:g} = <b>{row.amount:g}</b>")
+
     lines.append("")
     lines.append(f"Итого: <b>{ctx.total_amount:g}</b>")
+
+    # Список аутсайдеров (голосовали, но не в ростере)
     if ctx.outsiders:
         lines.append("")
         lines.append("<b>Новые голосовавшие (не в ростере):</b>")
+        # если в контексте есть usernames — используем, иначе None
+        usernames = getattr(ctx, "usernames", {}) or {}
         for uid, name in ctx.outsiders[:10]:
-            lines.append(f" • {name} (id={uid})")
+            link = _profile_link_html(uid, usernames.get(uid))
+            lines.append(f" • {escape(str(name))} — {link}")
+
     text = "\n".join(lines)
 
+    # Кнопки
     kb = InlineKeyboardBuilder()
-    # Кнопки добавления в ростер для первых 10 аутсайдеров
+    usernames = getattr(ctx, "usernames", {}) or {}
     for uid, name in ctx.outsiders[:10]:
-        kb.button(text=f"Добавить {name}", callback_data=PayrollAdd(poll_id=ctx.poll_id, teacher_id=uid).pack())
-    kb.adjust(1)
+        # кнопка "Добавить ..."
+        kb.button(
+            text=_short(f"Добавить {name}", 64),
+            callback_data=PayrollAdd(poll_id=ctx.poll_id, teacher_id=uid).pack(),
+        )
+        # кнопка "Профиль"
+        kb.button(
+            text="Профиль",
+            url=_profile_url(uid, usernames.get(uid)),
+        )
+    kb.adjust(2)  # по два в ряд: [Добавить][Профиль]
+
     return text, kb.as_markup()

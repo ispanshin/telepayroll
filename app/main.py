@@ -10,6 +10,8 @@ from .middlewares.context_injector import ContextInjector
 from .handlers import common as common_handlers
 from .handlers import informatics as informatics_handlers
 from .handlers import payroll as payroll_handlers
+from .handlers import roster as roster_handlers
+
 
 async def main():
     load_dotenv()
@@ -27,6 +29,7 @@ async def main():
     dp.include_router(common_handlers.router)
     dp.include_router(informatics_handlers.router)
     dp.include_router(payroll_handlers.router)
+    dp.include_router(roster_handlers.router)
 
     await dp.start_polling(bot)
 
