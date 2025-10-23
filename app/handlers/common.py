@@ -23,6 +23,25 @@ async def cmd_start(msg: Message):
     )
 
 
+@router.message(Command("help"))
+async def cmd_help(msg: Message):
+    text = (
+        "<b>Команды</b>\n\n"
+        "<b>Общее</b>\n"
+        "• /start — приветствие и краткое описание\n"
+        "• /help — эта справка\n\n"
+        "<b>Админ</b>\n"
+        "• /bind_here — привязать <i>текущий групповой чат</i> для опросов\n"
+        "• /newpoll — создать опрос (мастер из 2 шагов)\n"
+        "• /cancel — отменить текущий мастер\n"
+        "• /payroll — показать итоги по последнему опросу\n"
+        "• /roster — показать ростер преподавателей (имя и rate)\n"
+        "• /teachers — то же, что /roster (алиас)\n"
+        "• /remove_teacher &lt;Имя Фамилия...&gt; — удалить преподавателя из ростера по сохранённому имени\n"
+    )
+    await msg.answer(text)
+
+
 @router.message(Command("cancel"))
 async def cancel(msg: Message, state: FSMContext):
     await state.clear()

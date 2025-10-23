@@ -3,6 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 from .config import Settings
 from .context import AppContext
@@ -16,7 +17,10 @@ from .handlers import roster as roster_handlers
 async def main():
     load_dotenv()
     settings = Settings()
-    bot = Bot(settings.bot_token, parse_mode=ParseMode.HTML)
+    bot = Bot(
+        settings.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
     dp = Dispatcher(storage=MemoryStorage())
 
     ctx = AppContext.build(bot=bot, settings=settings)

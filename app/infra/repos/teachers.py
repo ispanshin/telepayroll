@@ -15,6 +15,19 @@ class TeachersRepo:
         self._db_path = db_path
         self._connect = connect
 
+    def delete_by_name(self, name: str) -> int:
+        name = (name or "").strip()
+        if not name:
+            return 0
+        with self._connect(self._db_path) as cn:
+            cur = cn.execute("DELETE FROM teachers WHERE name = ?", (name,))
+            return cur.rowcount  # сколько строк удалили
+
+    def delete_by_id(self, teacher_id: int) -> int:
+        with self._connect(self._db_path) as cn:
+            cur = cn.execute("DELETE FROM teachers WHERE id = ?", (int(teacher_id),))
+            return cur.rowcount
+
     def upsert(self, teacher: Teacher) -> None:
         with self._connect(self._db_path) as cn:
             cn.execute(

@@ -1,6 +1,8 @@
 from __future__ import annotations
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
+
 
 
 @contextmanager
@@ -53,5 +55,6 @@ CREATE INDEX IF NOT EXISTS idx_votes_poll      ON votes(poll_id);
 
 
 def ensure_schema(db_path: str, connect_fn=connect) -> None:
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)  # ← добавь это
     with connect_fn(db_path) as cn:
         cn.executescript(SCHEMA)

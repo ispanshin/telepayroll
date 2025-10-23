@@ -20,12 +20,13 @@ router = Router()
 
 
 class AddTeacherSG(StatesGroup):
-    waiting_name = State()  # ждём ввод «своего» имени/фамилии
+    waiting_name = State() # сначала имя
+    waiting_rate = State() # потом ставка
 
 
 @router.callback_query(PayrollAdd.filter())
 async def cb_add_teacher(
-    cb: CallbackQuery, callback_data: PayrollAdd, ctx: AppContext, state: FSMContext
+        cb: CallbackQuery, callback_data: PayrollAdd, ctx: AppContext, state: FSMContext
 ):
     """
     Шаг 1: по нажатию «Добавить …» просим ввести Имя Фамилию,
@@ -141,3 +142,28 @@ async def add_teacher_name_not_text(msg: Message):
     await msg.answer(
         "Нужен текст. Пришли Имя Фамилию сообщением или «-», чтобы оставить подсказку."
     )
+
+
+@router.message(Command(commands=["remove_teacher", "del_teacher"]))
+async def cmd_remove_teacher(msg: Message, ctx: AppContext):
+    # только админ
+    if not await ensure_admin_message(msg, ctx.settings.admin_ids):
+        return
+
+    text = (msg.text or "").strip()
+    parts = text.split(maxsplit=1)  # ['/remove_teacher', 'Имя Фамилия ...']
+    if len(parts) < 2:
+        await msg.answer("Формат: /remove_teacher <Имя Фамилия...>")
+        return
+
+    name = parts[1].strip()
+    if not name:
+        await msg.answer("Имя не может быть пустым.")
+        return
+
+    deleted = ctx.teachers.delete_by_name(name)
+    if deleted == 0:
+        await msg.answer(f"Не нашёл в ростере: <b>{escape(name)}</b>")
+        return
+
+    await msg.answer(f"Удалил из ростера: <b>{escape(name)}</b> (записей: {deleted})")
