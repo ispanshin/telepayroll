@@ -27,7 +27,7 @@ def payroll_screen_text_and_kb(ctx: PayrollContext, *, include_missing_zero: boo
 
     # Табличка по преподам
     for row in ctx.per_teacher:
-        if not include_missing_zero and row.classes == 0:
+        if not include_missing_zero and row.teacher_id in ctx.missing_ids:
             continue
         mark = "✅" if row.classes > 0 else "—"
         teacher = escape(str(row.teacher_name))
@@ -39,7 +39,7 @@ def payroll_screen_text_and_kb(ctx: PayrollContext, *, include_missing_zero: boo
     usernames = getattr(ctx, "usernames", {}) or {}
 
     # 👉 БЛОК: Преподаватели, которые не голосовали
-    missing_rows = [r for r in ctx.per_teacher if r.classes == 0]
+    missing_rows = [r for r in ctx.per_teacher if r.classes == 0 and r.teacher_id in ctx.missing_ids]
     if missing_rows:
         lines.append("")
         lines.append(f"<b>Не голосовали ({len(missing_rows)}):</b>")

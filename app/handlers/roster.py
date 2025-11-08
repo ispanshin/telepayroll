@@ -92,7 +92,7 @@ def _parse_rate(text: str) -> float | None:
     except ValueError:
         return None
     # можно добавить свои ограничения:
-    if rate <= 0 or rate > 1000:
+    if rate <= 0:
         return None
     return rate
 
@@ -145,8 +145,6 @@ async def show_roster(msg: Message, ctx: AppContext):
         await msg.answer("Ростер пуст.")
         return
 
-    # сортируем по имени, экранируем HTML
-    teachers.sort(key=lambda t: (t.name.casefold(), t.id))
 
     lines = ["<b>Ростер преподавателей</b>", ""]
     for t in teachers:

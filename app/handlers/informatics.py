@@ -32,6 +32,7 @@ async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
         option_ids = sorted(set(int(x) for x in (ans.option_ids or [])))
         if option_ids and option_ids[-1] == len(poll.options) - 1:
             option_ids.pop() # последний вариант всегда тык, его не считаем
+            option_ids.append(-1)
 
         ctx.votes.save_answer(
             poll_id=ans.poll_id,

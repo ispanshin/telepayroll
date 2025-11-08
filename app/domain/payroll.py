@@ -35,9 +35,16 @@ def build_payroll_context(
 
     # For each teacher in roster, compute classes from answers
     for tid, (name, rate) in roster_map.items():
-        classes = len(answers.get(tid, []))
+
+        votes = answers.get(tid, [])
+        classes = len(votes)
+
         if classes == 0:
             missing_ids.append(tid)
+
+        if -1 in votes:
+            classes -= 1
+            # не считаем тык
         per_teacher.append(
             PayrollRow(
                 teacher_id=tid, teacher_name=name, classes=classes, rate=rate, amount=classes * rate
