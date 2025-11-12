@@ -7,6 +7,7 @@ from typing import Dict, List, Iterable, Tuple
 class PayrollRow:
     teacher_id: int
     teacher_name: str
+    service_number: str
     classes: int
     rate: float
     amount: float
@@ -24,17 +25,17 @@ class PayrollContext:
 def build_payroll_context(
     *,
     poll_id: str,
-    roster: Iterable[Tuple[int, str, float]],
+    roster: Iterable[Tuple[int, str, str, float]],
     answers: Dict[int, List[int]],
     voters_names: Dict[int, str],
 ) -> PayrollContext:
     # roster: (id, name, rate)
-    roster_map = {int(tid): (name, float(rate)) for tid, name, rate in roster}
+    roster_map = {int(tid): (name, service_number, float(rate)) for tid, name, service_number, rate in roster}
     per_teacher: List[PayrollRow] = []
     missing_ids: List[int] = []
 
     # For each teacher in roster, compute classes from answers
-    for tid, (name, rate) in roster_map.items():
+    for tid, (name, service_number, rate) in roster_map.items():
 
         votes = answers.get(tid, [])
         classes = len(votes)
@@ -45,9 +46,10 @@ def build_payroll_context(
         if -1 in votes:
             classes -= 1
             # не считаем тык
+
         per_teacher.append(
             PayrollRow(
-                teacher_id=tid, teacher_name=name, classes=classes, rate=rate, amount=classes * rate
+                teacher_id=tid, teacher_name=name, service_number=service_number, classes=classes, rate=rate, amount=classes * rate
             )
         )
 

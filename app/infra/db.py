@@ -32,9 +32,6 @@ CREATE TABLE IF NOT EXISTS votes (
   poll_id TEXT NOT NULL,
   user_id INTEGER NOT NULL,
   option_ids_json TEXT NOT NULL DEFAULT '[]',
-  username TEXT,
-  first_name TEXT,
-  last_name TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (poll_id, user_id),
   FOREIGN KEY (poll_id) REFERENCES polls(poll_id) ON DELETE CASCADE
@@ -42,6 +39,7 @@ CREATE TABLE IF NOT EXISTS votes (
 CREATE TABLE IF NOT EXISTS teachers (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
+  service_number TEXT NUT NULL,
   default_rate REAL NOT NULL DEFAULT 1.0
 );
 CREATE TABLE IF NOT EXISTS settings (
@@ -55,6 +53,6 @@ CREATE INDEX IF NOT EXISTS idx_votes_poll      ON votes(poll_id);
 
 
 def ensure_schema(db_path: str, connect_fn=connect) -> None:
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)  # ← добавь это
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     with connect_fn(db_path) as cn:
         cn.executescript(SCHEMA)

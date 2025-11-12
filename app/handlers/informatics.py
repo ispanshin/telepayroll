@@ -26,9 +26,6 @@ async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
             return
 
         uid = int(ans.user.id)
-        username = ans.user.username
-        first_name = ans.user.first_name
-        last_name = ans.user.last_name
         option_ids = sorted(set(int(x) for x in (ans.option_ids or [])))
         if option_ids and option_ids[-1] == len(poll.options) - 1:
             option_ids.pop() # последний вариант всегда тык, его не считаем
@@ -38,9 +35,6 @@ async def on_poll_answer(ans: PollAnswer, ctx: AppContext):
             poll_id=ans.poll_id,
             user_id=uid,
             option_ids=option_ids,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
         )
     except Exception:
         # тут можно залогировать, чтобы не ронять обработку апдейтов

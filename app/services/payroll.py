@@ -11,9 +11,12 @@ class PayrollService:
         self._votes = votes
 
     def context(self, poll_id: str) -> PayrollContext:
-        roster = [(t.id, t.name, t.default_rate) for t in self._teachers.list_all()]
+        teachers = list(self._teachers.list_all())
+        roster = [(t.id, t.name, t.service_number, t.default_rate) for t in teachers]
         answers = self._votes.answers_by_poll(poll_id)
-        names = self._votes.voter_display_names(poll_id)
+        names = {t.id: t.name for t in teachers if t.id in answers}
+
+
         return build_payroll_context(
             poll_id=poll_id, roster=roster, answers=answers, voters_names=names
         )

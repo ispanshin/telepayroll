@@ -22,6 +22,7 @@ router = Router()
 class AddTeacherSG(StatesGroup):
     waiting_name = State() # сначала имя
     waiting_rate = State() # потом ставка
+    waiting_service_number = State() # потом табельный номер
 
 
 @router.callback_query(PayrollAdd.filter())
@@ -39,8 +40,7 @@ async def cb_add_teacher(
     uid = int(callback_data.teacher_id)
 
     # Подсказка для администратора: имя из голосов (может быть @username / ФИО / id)
-    suggested_map = ctx.votes.voter_display_names(callback_data.poll_id)
-    suggested = (suggested_map.get(uid) or str(uid)).strip()
+    suggested = str(uid)
 
     # Запоминаем контекст экрана, чтобы потом его обновить
     await state.update_data(
@@ -53,7 +53,7 @@ async def cb_add_teacher(
     await state.set_state(AddTeacherSG.waiting_name)
 
     await cb.message.answer(
-        "Введи Имя Фамилию для преподавателя.\n"
+        "Введи ФИО для преподавателя.\n"
         f"Подсказка из ТГ: <code>{suggested}</code>\n"
     )
 
@@ -69,7 +69,7 @@ async def add_teacher_name(msg: Message, state: FSMContext, ctx: AppContext):
     name = suggested if raw in {"", "-"} else raw
     name = name[:128]
     if not name:
-        await msg.answer("Имя не может быть пустым. Пришли Имя Фамилию или «-».")
+        await msg.answer("Имя не может быть пустым. Пришли ФИО или «-».")
         return
 
     await state.update_data(final_name=name)
@@ -77,7 +77,7 @@ async def add_teacher_name(msg: Message, state: FSMContext, ctx: AppContext):
 
     await msg.answer(
         f"Ок, имя: <b>{escape(name)}</b>.\n"
-        "Теперь введи <b>ставку</b> (например: 1, 1.5 или 1,5). "
+        "Теперь введи <b>ставку</b> (например: 1, 2500 или 0.5). "
         "Если оставить по умолчанию — пришли «-».",
     )
 
@@ -102,16 +102,44 @@ async def add_teacher_rate(msg: Message, state: FSMContext, ctx: AppContext):
     """Шаг 2: принимаем ставку, сохраняем teacher, обновляем экран."""
     data = await state.get_data()
     uid = int(data["teacher_id"])
-    poll_id = data["poll_id"]
     name = data.get("final_name") or (data.get("suggested_name") or str(uid))
 
     rate = _parse_rate(msg.text or "")
     if rate is None:
-        await msg.answer("Не понял ставку. Пришли число (например 1, 1.5 или 1,5), либо «-» для 1.")
+        await msg.answer("Не понял ставку. Пришли число (например 1, 2500 или 228), либо «-» для 1.")
         return
 
-    # Сохраняем в ростер
-    ctx.teachers.upsert(Teacher(id=uid, name=name, default_rate=rate))
+    await state.update_data(rate=rate)
+    await state.set_state(AddTeacherSG.waiting_service_number)
+
+    await msg.answer(
+        "Отлично.\n"
+        f"Теперь введи <b>табельный номер</b> для преподавателя <b>{escape(name)}</b>.\n"
+        "Это обязательное поле (пришли любой непустой текст, например: 42 или M-23)."
+    )
+
+
+@router.message(AddTeacherSG.waiting_service_number, F.text)
+async def add_teacher_service_number(msg: Message, state: FSMContext, ctx: AppContext):
+    data = await state.get_data()
+    uid = int(data["teacher_id"])
+    poll_id = data["poll_id"]
+    name = data.get("final_name") or (data.get("suggested_name") or str(uid))
+    rate = float(data["rate"])
+
+    service_number = (msg.text or "").strip()
+    if not service_number:
+        await msg.answer("табельный номер не может быть пустым. Пришли хоть что-то.")
+        return
+
+    ctx.teachers.upsert(
+        Teacher(
+            id=uid,
+            name=name,
+            default_rate=rate,
+            service_number=service_number,
+        )
+    )
 
     # Обновляем экран payroll (если знаем, какое сообщение править)
     chat_id = data.get("screen_chat_id")
@@ -130,13 +158,15 @@ async def add_teacher_rate(msg: Message, state: FSMContext, ctx: AppContext):
             if "message is not modified" not in str(e):
                 raise
 
-    await msg.answer(f"Добавил: <b>{escape(name)}</b> со ставкой <b>{rate:g}</b>.")
+    await msg.answer(
+        f"Добавил: <b>{escape(name)}</b> со ставкой <b>{rate:g}</b>, "
+        f"табельный номер: <b>{escape(service_number)}</b>."
+    )
     await state.clear()
 
 
 @router.message(Command(commands=["roster", "teachers"]))
 async def show_roster(msg: Message, ctx: AppContext):
-    # только для админов
     if not await ensure_admin_message(msg, ctx.settings.admin_ids):
         return
 
@@ -148,7 +178,11 @@ async def show_roster(msg: Message, ctx: AppContext):
 
     lines = ["<b>Ростер преподавателей</b>", ""]
     for t in teachers:
-        lines.append(f"• {escape(t.name)} — rate: <b>{t.default_rate:g}</b> (id={t.id})")
+        sn = t.service_number
+        lines.append(
+            f"• {escape(t.name)} — rate: <b>{t.default_rate:g}</b>, "
+            f"service: <b>{escape(sn)}</b> (id={t.id})"
+        )
 
     text = "\n".join(lines)
 
@@ -184,9 +218,9 @@ async def cmd_remove_teacher(msg: Message, ctx: AppContext):
         return
 
     text = (msg.text or "").strip()
-    parts = text.split(maxsplit=1)  # ['/remove_teacher', 'Имя Фамилия ...']
+    parts = text.split(maxsplit=1)  # ['/remove_teacher', 'ФИО ...']
     if len(parts) < 2:
-        await msg.answer("Формат: /remove_teacher <Имя Фамилия...>")
+        await msg.answer("Формат: /remove_teacher <ФИО...>")
         return
 
     name = parts[1].strip()

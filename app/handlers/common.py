@@ -38,6 +38,8 @@ async def cmd_help(msg: Message):
         "• /roster — показать ростер преподавателей (имя и rate)\n"
         "• /teachers — то же, что /roster (алиас)\n"
         "• /remove_teacher &lt;Имя Фамилия...&gt; — удалить преподавателя из ростера по сохранённому имени\n"
+        "• /add_teacher — команды нет, ситуация возникает автоматически\n"
+        "• /payroll_csv — генерирует итоговую таблицу\n"
     )
     await msg.answer(text)
 

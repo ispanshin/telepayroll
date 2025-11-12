@@ -29,7 +29,7 @@ def payroll_screen_text_and_kb(ctx: PayrollContext, *, include_missing_zero: boo
     for row in ctx.per_teacher:
         if not include_missing_zero and row.teacher_id in ctx.missing_ids:
             continue
-        mark = "✅" if row.classes > 0 else "—"
+        mark = "✅"
         teacher = escape(str(row.teacher_name))
         lines.append(f"{mark} {teacher}: {row.classes} × {row.rate:g} = <b>{row.amount:g}</b>")
 
