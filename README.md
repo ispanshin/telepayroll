@@ -59,35 +59,6 @@ DATA_DIR=./data                        # где хранить SQLite-файл (
    **`/payroll`** — видит таблицу «кто проголосовал/сколько занятий × ставка = сумма», общий итог, а также «новых голосовавших» (не из ростера).  
    Внизу — кнопки **«Добавить …»**, чтобы включить нового человека в ростер (ставка по умолчанию 1.0).
 
-## Команды
-
-- **/start** — краткая справка.
-- **/bind_here** — выполнить **в целевом групповом чате** админом; привязка чата для опросов.
-- **/newpoll** — мастер создания опроса (FSM: вопрос → варианты).
-- **/payroll** — показать итоги по **последнему** опросу с кнопками добавления в ростер.
-
-## Архитектура (слои)
-
-```
-telepayroll/app
-├─ infra/            # база и репозитории (SQLite, SQL изолирован здесь)
-│  ├─ db.py          # connect() + ensure_schema() (WAL, короткие транзакции)
-│  └─ repos/         # PollsRepo, VotesRepo, TeachersRepo, SettingsRepo
-├─ domain/           # "чистая" бизнес‑логика (без aiogram/БД)
-│  └─ payroll.py     # PayrollContext, расчёты, агрегации
-├─ services/         # use‑cases (склеивают домен + репозитории + Bot)
-│  ├─ polls.py       # отправка опроса, сохранение poll_id
-│  └─ ui.py          # форматирование текста/клавиатуры для экранов
-├─ handlers/         # aiogram‑хендлеры и FSM
-│  ├─ common.py      # /start, /newpoll (FSM)
-│  ├─ informatics.py # /bind_here, on_poll_answer
-│  └─ payroll.py     # /payroll и кнопки «Добавить»
-├─ middlewares/
-│  └─ context_injector.py  # прокидывает AppContext во все апдейты
-├─ context.py        # сборка AppContext (бот, настройки, репозитории, сервисы)
-└─ config.py         # pydantic‑settings (.env), путь к базе, id админов
-```
-
 ## Тестирование (минимум)
 
 - Домен (`domain/payroll.py`) тестируется как чистые функции (без aiogram/БД).  
